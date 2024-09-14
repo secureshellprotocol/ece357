@@ -1,0 +1,42 @@
+kit - concatenate and copy files
+
+USAGE:
+
+kit [-o outfile] infile1 [...infile2....]
+kit [-o outfile]
+    
+DESCRIPTION:
+
+This program opens each of the named input files in order, and concatenates
+the entire contents of each file, in order, to the output. If an
+outfile is specified, kit opens that file (once) for writing, creating it
+if it did not already exist, and overwriting the contents if it did.
+If no outfile is specified, the output is written to standard output, which
+is assumed to already be open.
+During the concatenation, kit will use a read/write buffer size of 4096 bytes.
+
+Any of the infiles can be the special name - (a single hyphen). kit
+will then concatenate standard input to the output, reading until end-of-file,
+but will not attempt to re-open nor to close standard input. The hyphen can be
+specified multiple times in the argument list, each of which will cause
+standard input to be read again at that point.
+
+If no infiles are specified, kit reads from standard input until eof.
+
+EXIT STATUS:
+
+program returns 0 if no errors (opening, reading, writing or closing)
+were encountered.
+
+Otherwise, it terminates immediately upon the error, giving a proper
+error report, and returns -1.
+
+EXAMPLES:
+
+kit file1 - file2
+(read from file1 until EOF, then standard input until EOF, then file2,
+output to standard output)
+
+kit -o output - - file3
+(read from standard input until EOF, then read again from standard input
+until EOF, then read file3 until EOF, all output to file "output")
