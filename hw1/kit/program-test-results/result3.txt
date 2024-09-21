@@ -1,0 +1,23 @@
+james@kurwa:~/Cooper/ECE357/hw1/kit$ gcc kit.c
+james@kurwa:~/Cooper/ECE357/hw1/kit$ touch something
+james@kurwa:~/Cooper/ECE357/hw1/kit$ chmod 000 something
+james@kurwa:~/Cooper/ECE357/hw1/kit$ ./a.out -o something
+Failed to open something for writing: Permission denied
+james@kurwa:~/Cooper/ECE357/hw1/kit$ ./a.out something
+Failed to open something for reading: Permission denied
+james@kurwa:~/Cooper/ECE357/hw1/kit$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

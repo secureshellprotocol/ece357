@@ -1,0 +1,23 @@
+james@kurwa:~/Cooper/ECE357/hw1/kit$ touch nothing
+james@kurwa:~/Cooper/ECE357/hw1/kit$ chmod 000 nothing
+james@kurwa:~/Cooper/ECE357/hw1/kit$ ./a.out -o nothing
+Failed to open nothing for writing: Permission denied
+james@kurwa:~/Cooper/ECE357/hw1/kit$ echo $?
+255
+james@kurwa:~/Cooper/ECE357/hw1/kit$ ./a.out nothing
+Failed to open nothing for reading: Permission denied
+james@kurwa:~/Cooper/ECE357/hw1/kit$ echo $?
+255
+james@kurwa:~/Cooper/ECE357/hw1/kit$ ./a.out -o my_friend in1
+james@kurwa:~/Cooper/ECE357/hw1/kit$ echo $?
+0
+james@kurwa:~/Cooper/ECE357/hw1/kit$ ./a.out my_friend
+line1
+line2
+line3
+james@kurwa:~/Cooper/ECE357/hw1/kit$ echo $?
+0
+james@kurwa:~/Cooper/ECE357/hw1/kit$
+
+
+

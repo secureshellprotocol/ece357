@@ -1,0 +1,38 @@
+james@kurwa:~/Cooper/ECE357/hw1/kit$ gcc kit.c
+james@kurwa:~/Cooper/ECE357/hw1/kit$ ./a.out
+hi hak
+hi hak
+bye hak
+bye hak
+james@kurwa:~/Cooper/ECE357/hw1/kit$ ./a.out
+sadasdasdsadsadasdasdsadasdsaddasdasdsaddasd
+
+james@kurwa:~/Cooper/ECE357/hw1/kit$ cat
+sadsadassadsadasasdasdaasdasda
+
+james@kurwa:~/Cooper/ECE357/hw1/kit$ ./a.out - in1
+sdasd
+sdasd
+line1
+line2
+line3
+james@kurwa:~/Cooper/ECE357/hw1/kit$ ./a.out - in1
+dasd
+dasd
+
+
+line1
+line2
+line3
+james@kurwa:~/Cooper/ECE357/hw1/kit$ ./a.out in1 - in2
+line1
+line2
+line3
+sadasdsadasdhi
+hi
+bye
+bye
+good
+morning
+hak
+james@kurwa:~/Cooper/ECE357/hw1/kit$
