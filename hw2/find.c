@@ -51,8 +51,8 @@ typedef struct stat_fax_t {
 
 int hlink_processor(ino_t inode_no, stat_facts *fstree_stats)
 {
-    for(int i = 0; i < fstree_stats->hlinked_inode_count; i++){
-        if(inode_no == fstree_stats->hlinked_inodes[i]){
+    for(int i = 0; i < fstree_stats->hlinked_inode_count; i++) {
+        if(inode_no == fstree_stats->hlinked_inodes[i]) {
             return EXIT_OK;
         }
     }
@@ -112,11 +112,11 @@ int directory_walker(const char *pwd, stat_facts *fstree_stats)
         strcpy(&filepath[strlen(pwd)], "/");
         strcpy(&filepath[strlen(pwd)+1], pwd_ent->d_name);
 
-        if(lstat(filepath, &st) < 0){
+        if(lstat(filepath, &st) < 0) {
             ERR_CONT("Could not stat %s! Reason: %s", filepath);
         }
 
-        for(int i = 0; i < strlen(filepath); i++){
+        for(int i = 0; i < strlen(filepath); i++) {
             if(!isascii(filepath[i]) || 
                isblank(filepath[i])  || 
                iscntrl(filepath[i]))
@@ -137,7 +137,7 @@ int directory_walker(const char *pwd, stat_facts *fstree_stats)
         printf("  %d\n", st_ind(current_mode));
 
         if((st.st_nlink > 1)) {
-            if(hlink_processor(st.st_ino, fstree_stats) < 0){
+            if(hlink_processor(st.st_ino, fstree_stats) < 0) {
                 ERR_CLOSE("Failed to process inode hard-links! %s");
             }
         }
@@ -151,7 +151,7 @@ int directory_walker(const char *pwd, stat_facts *fstree_stats)
             // does is exist?
             int fd;
             if((fd = open(filepath, O_RDONLY)) < 0) {
-                if(errno == ENOENT){
+                if(errno == ENOENT) {
                     ERR_CONT("Could not stat %s! Reason: %s", filepath);
                     fstree_stats->dangling_symlink_count+=1;
                 }
@@ -188,7 +188,7 @@ int main(int argc, char *argv[])
     
     fstree_stats.inode_count[st_ind(S_IFDIR)]+=1; // Our root inode!
     fstree_stats.hlinked_inodes = malloc(HLINK_LIST_BUFSIZE * sizeof(ino_t));
-    if(directory_walker(argv[1], &fstree_stats) < 0){
+    if(directory_walker(argv[1], &fstree_stats) < 0) {
         ERR_CLOSE("Directory walk routine failed! Tried to access %s",argv[1]);
     }
     
