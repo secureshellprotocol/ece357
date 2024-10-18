@@ -1,0 +1,28 @@
+james@kurwa:/tmp/pp$ echo Hi, since `reallocarray()` did not seem to exist on your
+ vm, i moved to `realloc()`. You dont see it here, but ive changed HLINK_LIST_BUFS
+IZE to 1 (as opposed to typical 64), so it will be forced to reallocate. Hopefully
+ this works the same.
+-bash: syntax error near unexpected token `('
+james@kurwa:/tmp/pp$ great
+-bash: great: command not found
+james@kurwa:/tmp/pp$ ls
+find.c  make_tree.sh
+james@kurwa:/tmp/pp$ ./make_tree.sh
+1+0 records in
+1+0 records out
+2048 bytes (2.0 kB, 2.0 KiB) copied, 3.7412e-05 s, 54.7 MB/s
+james@kurwa:/tmp/pp$ gcc find.c
+james@kurwa:/tmp/pp$ ./a.out root
+Could not stat root/folder2/slink2! Reason: No such file or directory
+Could not open root/poo! Permission denied
+
+There are 1 "fifo" inodes
+There are 7 "directory" inodes
+There are 7 "regular file" inodes
+There are 2 "symbolic link" inodes
+Total size in bytes of all encountered regular file inodes: 2048
+Total number of allocated disk blocks: 8
+Total number of (non-directory) inodes w/ more than 1 hard link: 8
+Total number of dangling symlinks: 1
+Total number of pathnames with problematic names: 3
+james@kurwa:/tmp/pp$

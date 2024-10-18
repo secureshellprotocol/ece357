@@ -1,0 +1,35 @@
+james@kurwa:/tmp/pp$ mkdir grumman
+james@kurwa:/tmp/pp$ touch grumman/llv
+james@kurwa:/tmp/pp$ touch grumman/kurbmaster
+james@kurwa:/tmp/pp$ chmod 100 grumman/
+james@kurwa:/tmp/pp$ ls
+find.c  grumman
+james@kurwa:/tmp/pp$ gcc find.c
+james@kurwa:/tmp/pp$ ./a.out grumman/
+Could not open grumman/! Permission denied
+Directory walk routine failed! Tried to access grumman/
+james@kurwa:/tmp/pp$ chmod 500 grumman/
+james@kurwa:/tmp/pp$ ./a.out grumman/
+
+There are 1 "directory" inodes
+There are 2 "regular file" inodes
+Total size in bytes of all encountered regular file inodes: 0
+Total number of allocated disk blocks: 0
+Total number of (non-directory) inodes w/ more than 1 hard link: 0
+Total number of dangling symlinks: 0
+Total number of pathnames with problematic names: 0
+james@kurwa:/tmp/pp$ chmod 700 grumman/
+james@kurwa:/tmp/pp$ dd if=/dev/urandom of=grumman/northrop bs=1994k count=1
+1+0 records in
+1+0 records out
+2041856 bytes (2.0 MB, 1.9 MiB) copied, 0.00828011 s, 247 MB/s
+james@kurwa:/tmp/pp$ ./a.out grumman/
+
+There are 1 "directory" inodes
+There are 3 "regular file" inodes
+Total size in bytes of all encountered regular file inodes: 2041856
+Total number of allocated disk blocks: 3992
+Total number of (non-directory) inodes w/ more than 1 hard link: 0
+Total number of dangling symlinks: 0
+Total number of pathnames with problematic names: 0
+james@kurwa:/tmp/pp$
