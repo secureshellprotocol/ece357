@@ -7,7 +7,6 @@
                             //  (# elems in vector) % VECTOR_SIZE
 
 typedef struct tokenizer_data_t {
-    char *command;          // name of command we are invoking
     unsigned int argc;      // # of elems in argv
     char **argv;            // arg vector
     unsigned int redirc;    // # of elems in redirv
