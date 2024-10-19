@@ -23,6 +23,8 @@ double timeval2milli(struct timeval input) {
     ((double) input.tv_sec + ((double) input.tv_usec / (double) 1000000)) * 1000;
 }
 
+// TODO MOVE THIS TO ITS OWN FILE, and add a switch case to detect the type of
+// fault, if its a signal.
 void report_child_status(pid_t pid, int wstatus, struct rusage *ru) {
     // report cause of death
     if(WIFEXITED(wstatus)) {
@@ -71,7 +73,7 @@ int main(int argc, char *argv[])
     char *pwd;
     if((pwd = getcwd(NULL, 0)) == NULL) {
         ERR_CONT("Unable to set cwd! %s\nDefaulting to '/'");
-        pwd = "/";
+        pwd = "/"; // YOU SHOULD CD HERE!
     }
 
     while((nread = getline(&line, &len, in)) > 0) {
@@ -84,6 +86,8 @@ int main(int argc, char *argv[])
             ERR_CLOSE("%s: Failed to tokenize line \"%s\"! %s", 
                        argv[0], line);
         }
+        // clean the buffer for our child, if we are reading in from a file
+        fflush(in);
 
         pid_t pid;
         int wstatus;

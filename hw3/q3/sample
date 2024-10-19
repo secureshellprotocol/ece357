@@ -1,4 +1,8 @@
+#!./shell
 # sample script to read in
+# written by james
+bad command
 ls -latr
 echo hi >pp.txt
-# sads
+
+exit 99
