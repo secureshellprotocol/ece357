@@ -31,5 +31,6 @@ int proc_runner(tokenized_line *in_cmd)
 
     execvp((in_cmd->argv)[0], in_cmd->argv);
 
-    ERR_CLOSE("Failed to exec %s! %s", (in_cmd->argv)[0]);
+    ERR_CONT("Failed to exec %s! %s", (in_cmd->argv)[0]);
+    return CHILD_EXEC_FAIL;
 }

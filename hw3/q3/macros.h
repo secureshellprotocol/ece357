@@ -6,6 +6,7 @@
 
 #define EXIT_OK             0
 #define EXIT_FAIL           -1
+#define CHILD_EXEC_FAIL     127
 
 // Macro to report an error to 'stderr' AND CLOSE AS A FAILURE.
 // Include a trailing '%s' in 'message' to also report errno.

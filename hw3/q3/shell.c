@@ -4,6 +4,7 @@
 #include <sys/resource.h>
 #include <sys/time.h>
 #include <sys/wait.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "macros.h"
@@ -18,14 +19,14 @@
 #define DISPLAY_PS1() \
     printf("%s:%s$ ", prompt, pwd); fflush(stdout);
 
-double timeval2milli(struct timeval input) {
+double timeval2sec(struct timeval input) {
     return 
-    ((double) input.tv_sec + ((double) input.tv_usec / (double) 1000000)) * 1000;
+    ((double) input.tv_sec + ((double) input.tv_usec / (double) 1000000));
 }
 
 // TODO MOVE THIS TO ITS OWN FILE, and add a switch case to detect the type of
 // fault, if its a signal.
-void report_child_status(pid_t pid, int wstatus, struct rusage *ru) {
+void report_child_status(pid_t pid, int wstatus, struct rusage *ru, double real) {
     // report cause of death
     if(WIFEXITED(wstatus)) {
         printf("Child %ld exited with exit status %d",
@@ -42,9 +43,10 @@ void report_child_status(pid_t pid, int wstatus, struct rusage *ru) {
     }
     printf("\n");
     // report time lived
-    printf("user time spent: %.3lf millis\n", timeval2milli(ru->ru_utime));
-    printf("system time spent: %.3lf millis\n", timeval2milli(ru->ru_stime));
-
+    double user = timeval2sec(ru->ru_utime);
+    double sys = timeval2sec(ru->ru_stime);
+    printf("Real: %.3fs User: %.3lfs Sys: %.3lfs\n", 
+        real, user, sys);
     return;
 }
 
@@ -56,7 +58,7 @@ int main(int argc, char *argv[])
             in = stdin;
             break;
         case 2: // stdin redirection to script
-            in = fopen(argv[1], "r");
+            in = freopen(argv[1], "r", stdin);
             if(in == NULL) {
                 ERR_CLOSE("Cannot open script %s for reading! %s", argv[1]);
             }
@@ -66,11 +68,14 @@ int main(int argc, char *argv[])
             return EXIT_FAIL;
     }
 
+    // State variables for execution loop
+    struct rusage *ru = malloc(sizeof(struct rusage));
+    
     char *line = NULL;
     size_t len = 0;
     ssize_t nread = 0;
-    
     char *pwd;
+    unsigned int last_exit = 0;
     if((pwd = getcwd(NULL, 0)) == NULL) {
         ERR_CONT("Unable to set cwd! %s\nDefaulting to '/'");
         pwd = "/"; // YOU SHOULD CD HERE!
@@ -91,11 +96,12 @@ int main(int argc, char *argv[])
 
         pid_t pid;
         int wstatus;
-        struct rusage *ru = malloc(sizeof(struct rusage));
+        time_t t;
         switch(pid = fork()) {
             case -1:
-                ERR_CLOSE("%s: Could not fork during creation of child for %s! %s",
+                ERR_CONT("%s: Could not fork during creation of child for %s! %s",
                            argv[0], (in_cmd->argv)[0]);
+                break;
             case 0:
                 exit(proc_runner(in_cmd));
             default:
@@ -103,11 +109,13 @@ int main(int argc, char *argv[])
                     ERR_CONT("%s: Error waiting for child, pid %d during %s! %s", 
                               argv[0], pid, (in_cmd->argv)[0]);
                 }
-                report_child_status(pid, wstatus, ru);
+                // set last_exit here
+                report_child_status(pid, wstatus, ru, -1);
                 break;
         }
+
         free(in_cmd);
     }
-    free(line); 
+    
     return 0; 
 }
