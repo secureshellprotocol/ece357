@@ -1,17 +1,14 @@
 #ifndef JR_UTILS_H
 #define JR_UTILS_H
-// cd(char *) - Change shell directory
+
+#define EXIT_CD_FAIL 1
+
+// cd() - Change shell directory
 //  returns EXIT_OK on success
-//  returns EXIT_FAIL if we couldn't change dir. Refer to `errno`. directory
-//    state IS preserved
-int cd(char *target_dir);
+//  returns EXIT_CD_FAIL if we couldn't change dir. Refer to `errno`. 
+int cd(unsigned int argc, char **argv);
 
 // pwd() - return shell's current pwd
 //  prints pwd to stdout
 void pwd();
-
-// exit(int) - exit shell
-//  Sends a SIGINT to the parent, waits for them to die, and then returns with a
-//  provided exit code.
-void exit(int code);
 #endif

@@ -1,0 +1,124 @@
+james@kurwa:~/Cooper/ECE357/hw3/q3$ ls
+coredump.c  poo2           sample_among_us  test1.sh     tokenizer.h
+macros.h    proc_runner.c  sample_run.txt   test1.txt    utils.c
+Makefile    proc_runner.h  shell.c          test2.sh     utils.h
+poo         sample         shell.h          tokenizer.c
+james@kurwa:~/Cooper/ECE357/hw3/q3$ make
+gcc -g -c shell.c
+gcc -g -c tokenizer.c
+gcc -g -c proc_runner.c
+gcc -g -c utils.c
+gcc -g -o shell shell.o tokenizer.o proc_runner.o utils.o
+james@kurwa:~/Cooper/ECE357/hw3/q3$ gcc coredump.c
+james@kurwa:~/Cooper/ECE357/hw3/q3$ cat coredump.c
+// test file, not part of program
+#include <signal.h>
+int main(){
+    raise(SIGSEGV);
+}
+james@kurwa:~/Cooper/ECE357/hw3/q3$ ./shell
+ls -la
+total 172
+drwxr-xr-x 1 james james   434 Oct 21 20:02 .
+drwxr-xr-x 1 james james    42 Oct 21 19:37 ..
+-rwxr-xr-x 1 james james 16672 Oct 21 20:02 a.out
+-rw-r--r-- 1 james james    88 Oct 21 19:05 coredump.c
+-rw-r--r-- 1 james james   793 Oct 21 18:46 macros.h
+-rw-r--r-- 1 james james   419 Oct 21 19:49 Makefile
+drwxr-xr-x 1 james james    66 Oct 21 19:58 poo
+drwxr-xr-x 1 james james    16 Oct 21 19:59 poo2
+-rw-r--r-- 1 james james  2186 Oct 21 17:18 proc_runner.c
+-rw-r--r-- 1 james james   179 Oct 21 17:13 proc_runner.h
+-rw-r--r-- 1 james james  9952 Oct 21 20:01 proc_runner.o
+-rwxr-xr-x 1 james james   191 Oct 21 19:53 sample
+drwxr-xr-x 1 james james    36 Oct 21 19:55 sample_among_us
+-rw-r--r-- 1 james james  1672 Oct 21 19:57 sample_run.txt
+-rwxr-xr-x 1 james james 30016 Oct 21 20:01 shell
+-rw-r--r-- 1 james james  4849 Oct 21 18:59 shell.c
+-rw-r--r-- 1 james james   370 Oct 21 18:46 shell.h
+-rw-r--r-- 1 james james 17272 Oct 21 20:01 shell.o
+-rwxr-xr-x 1 james james   254 Oct 21 12:54 test1.sh
+-rw-r--r-- 1 james james   641 Oct 21 19:59 test1.txt
+-rwxr-xr-x 1 james james   892 Oct 21 20:01 test2.sh
+-rw-r--r-- 1 james james  1081 Oct 21 19:37 tokenizer.c
+-rw-r--r-- 1 james james   425 Oct 21 19:37 tokenizer.h
+-rw-r--r-- 1 james james  8664 Oct 21 20:01 tokenizer.o
+-rw-r--r-- 1 james james   953 Oct 21 18:39 utils.c
+-rw-r--r-- 1 james james   321 Oct 21 18:22 utils.h
+-rw-r--r-- 1 james james  7920 Oct 21 20:01 utils.o
+Child 221932 exited with exit status 0
+Real: 0.004s User: 0.002s Sys: 0.001s
+echo HI!!!!!! HOW ARE YOU!!!!!!!
+HI!!!!!! HOW ARE YOU!!!!!!!
+Child 221948 exited with exit status 0
+Real: 0.003s User: 0.000s Sys: 0.002s
+echo hmmmm 2>whatdo
+hmmmm
+Child 221994 exited with exit status 0
+Real: 0.001s User: 0.000s Sys: 0.001s
+cat whatdo
+Child 221997 exited with exit status 0
+Real: 0.002s User: 0.000s Sys: 0.002s
+ls -la whatdo
+-rw-r--r-- 1 james james 0 Oct 21 20:02 whatdo
+Child 222000 exited with exit status 0
+Real: 0.003s User: 0.000s Sys: 0.003s
+echo hmmmmmmmm >whatdoNOW??
+Child 222011 exited with exit status 0
+Real: 0.001s User: 0.000s Sys: 0.001s
+cat whatdoNOW??
+hmmmmmmmm
+Child 222027 exited with exit status 0
+Real: 0.001s User: 0.001s Sys: 0.000s
+fortune >fortunate
+Child 222128 exited with exit status 0
+Real: 0.032s User: 0.021s Sys: 0.005s
+cowsay - <fortunate
+ ___
+< - >
+ ---
+        \   ^__^
+         \  (oo)\_______
+            (__)\       )\/\
+                ||----w |
+                ||     ||
+Child 222142 exited with exit status 0
+Real: 0.031s User: 0.017s Sys: 0.005s
+cowsay <fortunate
+ _____________________
+/ Knowledge is power. \
+|                     |
+\ -- Francis Bacon    /
+ ---------------------
+        \   ^__^
+         \  (oo)\_______
+            (__)\       )\/\
+                ||----w |
+                ||     ||
+Child 222152 exited with exit status 0
+Real: 0.023s User: 0.018s Sys: 0.004s
+./a.out
+Child 222171 terminated by signal 11 (core dumped)
+Real: 0.057s User: 0.000s Sys: 0.001s
+./a.out 2>hmm
+Child 222190 terminated by signal 11 (core dumped)
+Real: 0.060s User: 0.001s Sys: 0.001s
+cat hmm
+Child 222206 exited with exit status 0
+Real: 0.002s User: 0.000s Sys: 0.001s
+./a.out >hmm
+Child 222217 terminated by signal 11 (core dumped)
+Real: 0.058s User: 0.000s Sys: 0.001s
+cat hmm
+Child 222232 exited with exit status 0
+Real: 0.001s User: 0.001s Sys: 0.000s
+ls -la hmm
+-rw-r--r-- 1 james james 0 Oct 21 20:05 hmm
+Child 222241 exited with exit status 0
+Real: 0.003s User: 0.001s Sys: 0.001s
+echo i just tried that in bash and it didnt work either
+i just tried that in bash and it didnt work either
+Child 222316 exited with exit status 0
+Real: 0.001s User: 0.000s Sys: 0.001s
+./shell exited with code 0
+james@kurwa:~/Cooper/ECE357/hw3/q3$

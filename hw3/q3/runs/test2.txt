@@ -1,0 +1,24 @@
+james@kurwa:~/Cooper/ECE357/hw3/q3/poo2$ ls
+test2.sh
+james@kurwa:~/Cooper/ECE357/hw3/q3/poo2$ ls ../shell
+../shell
+james@kurwa:~/Cooper/ECE357/hw3/q3/poo2$ ./test2.sh
+/tmp
+/home/james
+Failed to open testfile.out! Permission denied
+Child 221606 exited with exit status 1
+Real: 0.000s User: 0.000s Sys: 0.000s
+Failed to exec lssssssss! No such file or directory
+Child 221607 exited with exit status 127
+Real: 0.000s User: 0.000s Sys: 0.000s
+Child 221608 exited with exit status 0
+Real: 0.001s User: 0.001s Sys: 0.000s
+Failed to open >testfile.out! Permission denied
+Child 221609 exited with exit status 1
+Real: 0.000s User: 0.000s Sys: 0.000s
+../shell exited with code 1
+james@kurwa:~/Cooper/ECE357/hw3/q3/poo2$ ls
+test2.sh
+james@kurwa:~/Cooper/ECE357/hw3/q3/poo2$ ls -la ~/testfile.out
+---------- 1 james james 18 Oct 21 17:06 /home/james/testfile.out
+james@kurwa:~/Cooper/ECE357/hw3/q3/poo2$

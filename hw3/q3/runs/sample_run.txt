@@ -1,0 +1,44 @@
+james@kurwa:~/Cooper/ECE357/hw3/q3/sample_among_us$ ls
+sample
+james@kurwa:~/Cooper/ECE357/hw3/q3/sample_among_us$ ls ../shell
+../shell
+james@kurwa:~/Cooper/ECE357/hw3/q3/sample_among_us$ ./sample
+Failed to exec bad! No such file or directory
+Child 220524 exited with exit status 127
+Real: 0.001s User: 0.000s Sys: 0.000s
+total 4
+drwxr-xr-x 1 james james 370 Oct 21 19:54 ..
+-rwxr-xr-x 1 james james 208 Oct 21 19:55 sample
+drwxr-xr-x 1 james james  12 Oct 21 19:55 .
+Child 220525 exited with exit status 0
+Real: 0.003s User: 0.000s Sys: 0.002s
+Child 220526 exited with exit status 0
+Real: 0.001s User: 0.000s Sys: 0.001s
+I AM WINNING
+Child 220527 exited with exit status 0
+Real: 0.001s User: 0.001s Sys: 0.000s
+Child 220528 exited with exit status 0
+Real: 0.001s User: 0.000s Sys: 0.001s
+Child 220529 exited with exit status 0
+Real: 0.001s User: 0.000s Sys: 0.001s
+ls: cannot access 'a': No such file or directory
+Child 220530 exited with exit status 2
+Real: 0.001s User: 0.000s Sys: 0.001s
+Child 220531 exited with exit status 2
+Real: 0.001s User: 0.000s Sys: 0.001s
+total 12
+drwxr-xr-x 1 james james 370 Oct 21 19:54 ..
+-rwxr-xr-x 1 james james 208 Oct 21 19:55 sample
+-rw-r--r-- 1 james james  13 Oct 21 19:55 wee
+drwxr-xr-x 1 james james  36 Oct 21 19:55 .
+-rw-r--r-- 1 james james  62 Oct 21 19:55 hallo.txt
+Child 220532 exited with exit status 0
+Real: 0.003s User: 0.002s Sys: 0.000s
+../shell exited with code 69
+james@kurwa:~/Cooper/ECE357/hw3/q3/sample_among_us$ cat wee
+I AM WINNING
+james@kurwa:~/Cooper/ECE357/hw3/q3/sample_among_us$ cat hallo.txt
+hi
+append me
+ls: cannot access 'a': No such file or directory
+james@kurwa:~/Cooper/ECE357/hw3/q3/sample_among_us$

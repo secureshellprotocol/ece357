@@ -1,0 +1,36 @@
+james@kurwa:~/Cooper/ECE357/hw3/q3$ make
+gcc -g -c shell.c
+gcc -g -c tokenizer.c
+gcc -g -c proc_runner.c
+gcc -g -c utils.c
+gcc -g -o shell shell.o tokenizer.o proc_runner.o utils.o
+james@kurwa:~/Cooper/ECE357/hw3/q3$ ./shell
+cat
+hi
+hi
+hello
+hello
+heya
+heya
+AAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAA
+Child 232451 exited with exit status 0
+Real: 16.751s User: 0.000s Sys: 0.002s
+fortune
+When the bosses talk about improving productivity, they are never talking
+about themselves.
+Child 232502 exited with exit status 0
+Real: 0.026s User: 0.019s Sys: 0.005s
+echo >
+
+Child 232535 exited with exit status 0
+Real: 0.002s User: 0.000s Sys: 0.002s
+echo >sdasadsadasd
+Child 232574 exited with exit status 0
+Real: 0.002s User: 0.000s Sys: 0.001s
+ls sdasadsadasd
+sdasadsadasd
+Child 232588 exited with exit status 0
+Real: 0.002s User: 0.001s Sys: 0.001s
+./shell exited with code 0
+james@kurwa:~/Cooper/ECE357/hw3/q3$

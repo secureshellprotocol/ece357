@@ -1,0 +1,50 @@
+james@kurwa:~/Cooper/ECE357/hw3/q3$ make
+gcc -g -c shell.c
+gcc -g -c tokenizer.c
+gcc -g -c proc_runner.c
+gcc -g -c utils.c
+gcc -g -o shell shell.o tokenizer.o proc_runner.o utils.o
+james@kurwa:~/Cooper/ECE357/hw3/q3$ ./shell
+gcc coredump.c
+Child 176703 exited with exit status 0
+Real: 0.035s User: 0.022s Sys: 0.012s
+./a.out
+Child 176711 terminated by signal 11 (core dumped)
+Real: 0.059s User: 0.001s Sys: 0.000s
+ls 0 0 0 00 00 00 00 00 00 0 00 00 00 0 00 00 0 00 0 0 00 0 0 00 0 0 0 00 0 0 00 0
+ 0 00 0 0 0 0 00 0 0 00 0 0 0 00 0 0 00 0 0 0 00 0 00 0
+./shell: linetok: Unrecoverable failure! failed to tokenize line "ls"! Argument li
+st too long
+mkdir poo15
+Child 176734 exited with exit status 0
+Real: 0.001s User: 0.000s Sys: 0.001s
+pwd
+/home/james/Cooper/ECE357/hw3/q3
+cd poo15
+pwd
+/home/james/Cooper/ECE357/hw3/q3/poo15
+cp ../sample_noshebang .
+Child 176774 exited with exit status 0
+Real: 0.002s User: 0.000s Sys: 0.001s
+./sample_noshebang
+./sample_noshebang: line 3: bad: command not found
+total 8
+drwxr-xr-x 1 james james 496 Oct 22 17:41 ..
+-rwxr-xr-x 1 james james 180 Oct 22 17:41 sample_noshebang
+drwxr-xr-x 1 james james  32 Oct 22 17:41 .
+I AM WINNING
+total 16
+drwxr-xr-x 1 james james 496 Oct 22 17:41 ..
+-rwxr-xr-x 1 james james 180 Oct 22 17:41 sample_noshebang
+-rw-r--r-- 1 james james  13 Oct 22 17:41 wee
+drwxr-xr-x 1 james james  56 Oct 22 17:41 .
+-rw-r--r-- 1 james james  62 Oct 22 17:41 hallo.txt
+Child 176781 exited with exit status 69
+Real: 0.010s User: 0.002s Sys: 0.006s
+ls
+hallo.txt  sample_noshebang  wee
+Child 176788 exited with exit status 0
+Real: 0.002s User: 0.001s Sys: 0.000s
+exit 8
+./shell exited with code 8
+james@kurwa:~/Cooper/ECE357/hw3/q3$

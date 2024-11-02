@@ -1,0 +1,23 @@
+james@kurwa:~/Cooper/ECE357/hw3/q3/poo$ ls
+test1.sh
+james@kurwa:~/Cooper/ECE357/hw3/q3/poo$ ls ../shell
+../shell
+james@kurwa:~/Cooper/ECE357/hw3/q3/poo$ ./test1.sh
+Child 221185 exited with exit status 0
+Real: 0.001s User: 0.001s Sys: 0.000s
+Child 221186 exited with exit status 0
+Real: 0.001s User: 0.000s Sys: 0.001s
+total 12
+-rwxr-xr-x 1 james james 255 Oct 21 19:51 test1.sh
+-rw-r--r-- 1 james james  18 Oct 21 19:58 testfile2.out
+-rw-r--r-- 1 james james  18 Oct 21 19:58 testfile.out
+Child 221187 exited with exit status 0
+Real: 0.003s User: 0.000s Sys: 0.002s
+../shell exited with code 17
+james@kurwa:~/Cooper/ECE357/hw3/q3/poo$
+
+
+
+
+
+
