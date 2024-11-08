@@ -1,42 +1,16 @@
 #include <stdio.h>
 
 #include "macros.h"
+#include "pipeline.h"
 
 #define USAGE(name) \
-    printf("Usage: %s pattern infile1 [...infile2...]", name);
+    printf("Usage: %s pattern infile1 [...infile2...]", name); return EXIT_FAIL;
 
 int main(int argc, char *argv[]) 
 {
-    if(argc < 3) {
-        USAGE(argv[0]);
-        return EXIT_FAIL;
-    }
+    if(argc < 3) { USAGE(argv[0]); } // --> EXIT_FAIL
 
-    for(unsigned int i = 2; i < argc; i++) {
-        FILE* in;
-        if((in = fopen(argv[i], 'r')) == NULL) {
-            ERR_CLOSE("%s: Couldn't open %s for reading: %s", argv[0], argv[i]);
-        }
-        
-        // establish plumbing
-        int file_to_grep[2];
-        if(pipe(file_to_grep) < 0) {
-            ERR_CLOSE("%s: Failed to establish pipes! %s", argv[0]);
-        }
+    pipeline_bringup(--argc, &(argv[1]));
 
-        int grep_to_more[2];
-        if(pipe(grep_to_more) < 0) {
-            ERR_CLOSE("%s: Failed to establish pipes! %s", argv[0]);
-        } 
-        
-        // establish 
-        int cpid;
-        switch(cpid = fork()) {
-            case -1:    // fork failed
-                ERR_CLOSE("%s: Failed to fork child: %s", argv[0]);
-            case 0:     // child
-                                
-            default:    // parent
-        }
-    }
+    return EXIT_OK;
 }
