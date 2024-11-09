@@ -10,7 +10,7 @@ int main(int argc, char *argv[])
 {
     if(argc < 3) { USAGE(argv[0]); } // --> EXIT_FAIL
 
-    pipeline_bringup(--argc, &(argv[1]));
+    pipeline_bringup(argc, argv);
 
     return EXIT_OK;
 }
