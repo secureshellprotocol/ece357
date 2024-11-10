@@ -1,3 +1,4 @@
+#define _GNU_SOURCE //https://stackoverflow.com/questions/25411892/f-setpipe-sz-undeclared
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,35 +10,97 @@
 #define USAGE(name) \
     printf("Usage: %s pattern infile1 [...infile2...]\n", name); return EXIT_FAIL;
 
+unsigned int volatile files_read = 1;
+unsigned int volatile total_reported_bytes = 0;
+
+jmp_buf readloop_jmp_buf;
+
+void skip_handler(int s)
+{
+    longjmp(readloop_jmp_buf, 1);
+}
+
+void report_stats_handler(int s)
+{
+    ERR("\n\n----------Begin Status Report----------\n");
+    ERR("Number of files processed: %d\n", files_read);
+    ERR("Total number of bytes processed: %d\n", total_reported_bytes);
+    ERR("\n-----------End Status Report-----------\n\n");
+}
+
+int establish_signal_overrides(int signo, void (*handler)(int))
+{
+    struct sigaction sa;
+    sa.sa_handler = handler;
+    sigemptyset(&(sa.sa_mask));
+    sigaddset(&(sa.sa_mask), signo);
+    if(sigaction(signo, &sa, NULL) == -1) {
+        ERR("establish_signal_overrides: sigaction: %s");
+        return EXIT_FAIL;
+    }
+    return EXIT_OK;
+}
+
 int main(int argc, char *argv[]) 
 {
     if(argc < 3) { USAGE(argv[0]); } // --> EXIT_FAIL
 
-    unsigned int files_read = 0;
-    unsigned int total_reported_bytes = 0;
     bringup_state *s = NULL;
     
     for(int i = 2; i < argc; i++) {
+        
         // bring up pipeline
-
         if((s = pipeline_bringup(argv[i], argv[1])) == NULL) {
             ERR("%s: pipeline initialization failed!", argv[0]);
             goto error;
         }
 
-        // start busyloop
-        if(read_cycle(s) == EXIT_FAIL) {
-            ERR("%s: read cycle failure!");
+        int grep_pid = s->grep_pid;
+        int more_pid = s->more_pid;
+        
+        
+        if(establish_signal_overrides(SIGUSR1, report_stats_handler) < 0) {
             goto error;
         }
-        
-        files_read++;
-        total_reported_bytes += s->bytes_read;
+        if(establish_signal_overrides(SIGUSR2, skip_handler) < 0) {
+            goto error;
+        }
 
         ERR("\n\n>>>\t>>>\t>>>\t>>>Read file %d\n\n", files_read);
+        
+        // start busyloop
+        switch(setjmp(readloop_jmp_buf)) {
+            case 0:
+                if(read_cycle(s) == EXIT_FAIL) {
+                    ERR("%s: read cycle failure!");
+                    goto error;
+                }
+                break;
+            default:
+                ERR("\n\n*** SIGUSR2 received! Moving on to file #%d\n", files_read);
+                // our state was invalidated. due to stack rewind, we need to
+                // enforce null s.
+                //s = NULL;
 
+//                if(kill(more_pid, SIGINT) < 0) {
+//                    ERR("Failed to kill more! %s");
+//                }
+
+                goto file_skip;
+        }
+        
+        total_reported_bytes += s->bytes_read;
+        
+file_skip: 
+        bringdown_pipes(s);
+        
+        unsigned int grep_wstatus, more_wstatus;
+        while(waitpid(more_pid, &more_wstatus, 0) > 0 || (errno == EINTR));
+        while(waitpid(grep_pid, &grep_wstatus, 0) > 0 || (errno == EINTR));
         // clean up
         bringdown_state(s);
+
+        files_read++;
     }
     return EXIT_OK;
 

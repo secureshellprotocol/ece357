@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <fcntl.h>
 #include <setjmp.h>
 #include <signal.h>
@@ -8,19 +9,6 @@
 
 #include "macros.h"
 #include "pipeline.h"
-
-jmp_buf readloop_jmp_buf;
-
-void skip_handler(int s)
-{
-    longjmp(readloop_jmp_buf, 1);
-}
-
-void report_stats_handler(int s)
-{
-    ERR("\nHEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE\n\n");
-    return;
-}
 
 bringup_state *pipeline_bringup(char *filename, char *pattern) 
 {
@@ -37,13 +25,17 @@ bringup_state *pipeline_bringup(char *filename, char *pattern)
         ERR("pipeline_bringup: Couldn't open %s for reading: %s", filename);
         goto error; // this should skip to next file
     }
-    
+
     // establish plumbing
+    
     int pipeline_fds[2];
     if(pipe(pipeline_fds) < 0) {
         ERR("pipeline_bringup: Failed to establish pipes! %s");
         goto error;
     }
+    
+    int pipe_sz; 
+    pipe_sz = fcntl(pipeline_fds[1], F_SETPIPE_SZ, 4096);
     s->pipe_out_fd = pipeline_fds[1];
     s->grep_in_fd = pipeline_fds[0];
 
@@ -51,6 +43,7 @@ bringup_state *pipeline_bringup(char *filename, char *pattern)
         ERR("pipeline_bringup: Failed to establish pipes! %s");
         goto error;
     }
+    pipe_sz = fcntl(pipeline_fds[1], F_SETPIPE_SZ, 4096);
     s->grep_out_fd = pipeline_fds[1];
     s->more_in_fd = pipeline_fds[0];
 
@@ -78,47 +71,13 @@ int read_cycle(bringup_state *s)
     char pipe_write_buffer[4096];
     int readlength;
 
-    // setup SIGUSR2 handler -- skip on demand!
-    struct sigaction sa_sigusr2;
-    sa_sigusr2.sa_handler = skip_handler;
-    sigemptyset(&(sa_sigusr2.sa_mask));
-    sigaddset(&(sa_sigusr2.sa_mask), SIGUSR2);
-    if(sigaction(SIGUSR2, &sa_sigusr2, NULL) == -1) {
-        ERR("sigaction: %s");
-        goto error;
-    }
-
-    struct sigaction sa_sigusr1;
-    sa_sigusr1.sa_handler = report_stats_handler;
-    sigemptyset(&(sa_sigusr1.sa_mask));
-    sigaddset(&(sa_sigusr1.sa_mask), SIGUSR1);
-    if(sigaction(SIGUSR1, &sa_sigusr1, NULL) == -1) {
-        ERR("sigaction: %s");
-        goto error;
-    }
-
-    switch(setjmp(readloop_jmp_buf)) {
-        case 0:
-            break; // hit the loop
-        default:
-            ERR("\n*** SIGUSR2 Received! Moving on... \n");
-            // bandaid fix -- tell more its time to leave
-            if(kill(s->more_pid, SIGINT) < 0) {
-                ERR("kill: could not SIGINT more! %s");
-                goto error;
-            }
-            return EXIT_OK; // pretend we hit eof
-    }
-    
     // this could be more robust .. we arent error checking read!!!!
-    while((readlength = read(s->file_in_fd, pipe_write_buffer, 4096)) > 0) {
-        if(write(s->pipe_out_fd, pipe_write_buffer, readlength) < 0) {
+    while((readlength = read(s->file_in_fd, pipe_write_buffer, 4096)) > 0 || (errno == EINTR)) {
+        if(write(s->pipe_out_fd, pipe_write_buffer, readlength) < 0 && errno != EINTR) {
             ERR("write: %s");
         }
         s->bytes_read += readlength;
     }
-    // we end up with a zombie grep.. maybe during bringup, we should establish
-    //  async waits for our children?
     return EXIT_OK;
 error:
     return EXIT_FAIL;
@@ -142,46 +101,45 @@ bringup_state *init_state()
     return s;
 }
 
-void bringdown_state(bringup_state *s) 
+void bringdown_pipes(bringup_state *s) 
 {
     if(s == NULL) { return; }
+
     if(s->file_in_fd != -1) {
         if(close(s->file_in_fd) < 0) {
             ERR("Failed to close fd for current open file! %s");
-        }
+        } else s->file_in_fd = -1;
     }
     if(s->pipe_out_fd != -1) {
         if(close(s->pipe_out_fd) < 0) {
             ERR("Failed to close cat write pipe descriptor! %s");
-        }
+        } else s->pipe_out_fd = -1;
     }
     if(s->grep_in_fd != -1) {
         if(close(s->grep_in_fd) < 0) {
             ERR("Failed to close grep read pipe descriptor! %s");
-        }
+        } else s->grep_in_fd = -1;
     }
     if(s->grep_out_fd != -1) {
         if(close(s->grep_out_fd) < 0) {
             ERR("Failed to close grep write pipe descriptor! %s");
-        }
+        } else s->grep_out_fd = -1;
     }
     if(s->more_in_fd != -1) {
         if(close(s->more_in_fd) < 0) {
             ERR("Failed to close more read pipe descriptor! %s");
-        }
+        } else s->more_in_fd = -1;
     }
+    
+    return;
+}
 
-    // wait on the kids
-    while(waitpid(s->more_pid, NULL, 0) > 0 || errno==EINTR) {
-        if(errno != EINTR && errno != 0) {
-            ERR("waitpid: failed to wait for more! %s");
-        }
-    }
-    while(waitpid(s->grep_pid, NULL, 0) > 0 || errno==EINTR) {
-        if(errno != EINTR && errno != 0) {
-            ERR("waitpid: failed to wait for grep! %s");
-        }
-    }
+
+void bringdown_state(bringup_state *s) 
+{
+    if(s == NULL) { return; }
+
+    bringdown_pipes(s);
 
     free(s);
     s = NULL;
