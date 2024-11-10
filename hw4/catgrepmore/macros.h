@@ -10,6 +10,6 @@
 // Macro to report an error to 'stderr' and continue.
 // We are NOT responsible for cleanup.
 #define ERR(message, ...) \
-    fprintf(stderr, message, ## __VA_ARGS__, strerror(errno));
+    fprintf(stderr, message" ", ## __VA_ARGS__, strerror(errno));
 
 #endif
