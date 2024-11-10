@@ -16,6 +16,12 @@ void skip_handler(int s)
     longjmp(readloop_jmp_buf, 1);
 }
 
+void report_stats_handler(int s)
+{
+    ERR("\nHEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE\n\n");
+    return;
+}
+
 bringup_state *pipeline_bringup(char *filename, char *pattern) 
 {
     bringup_state *s;
@@ -73,11 +79,20 @@ int read_cycle(bringup_state *s)
     int readlength;
 
     // setup SIGUSR2 handler -- skip on demand!
-    struct sigaction sa;
-    sa.sa_handler = skip_handler;
-    sigemptyset(&(sa.sa_mask));
-    sigaddset(&(sa.sa_mask), SIGUSR2);
-    if(sigaction(SIGUSR2, &sa, NULL) == -1) {
+    struct sigaction sa_sigusr2;
+    sa_sigusr2.sa_handler = skip_handler;
+    sigemptyset(&(sa_sigusr2.sa_mask));
+    sigaddset(&(sa_sigusr2.sa_mask), SIGUSR2);
+    if(sigaction(SIGUSR2, &sa_sigusr2, NULL) == -1) {
+        ERR("sigaction: %s");
+        goto error;
+    }
+
+    struct sigaction sa_sigusr1;
+    sa_sigusr1.sa_handler = report_stats_handler;
+    sigemptyset(&(sa_sigusr1.sa_mask));
+    sigaddset(&(sa_sigusr1.sa_mask), SIGUSR1);
+    if(sigaction(SIGUSR1, &sa_sigusr1, NULL) == -1) {
         ERR("sigaction: %s");
         goto error;
     }
@@ -157,8 +172,16 @@ void bringdown_state(bringup_state *s)
     }
 
     // wait on the kids
-    waitpid(s->more_pid, NULL, 0);
-    waitpid(s->grep_pid, NULL, 0);
+    while(waitpid(s->more_pid, NULL, 0) > 0 || errno==EINTR) {
+        if(errno != EINTR && errno != 0) {
+            ERR("waitpid: failed to wait for more! %s");
+        }
+    }
+    while(waitpid(s->grep_pid, NULL, 0) > 0 || errno==EINTR) {
+        if(errno != EINTR && errno != 0) {
+            ERR("waitpid: failed to wait for grep! %s");
+        }
+    }
 
     free(s);
     s = NULL;

@@ -1,3 +1,4 @@
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/wait.h>
@@ -14,10 +15,8 @@ int main(int argc, char *argv[])
 
     unsigned int files_read = 0;
     unsigned int total_reported_bytes = 0;
-
-    // TODO set up SIGUSR1 reporter handler here
-
     bringup_state *s = NULL;
+    
     for(int i = 2; i < argc; i++) {
         // bring up pipeline
 

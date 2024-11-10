@@ -18,6 +18,7 @@ typedef struct bringup_state_t {
 
 extern jmp_buf readloop_jmp_buf;
 void skip_handler(int signum);
+void report_stats_handler(int signum);
 
 bringup_state *pipeline_bringup(char *filename, char *pattern);
 
