@@ -1,4 +1,2 @@
 #!/bin/bash
-
-# find 'cgm' executable
-pkill -n --signal 9 ./cgm
+pkill -n --signal SIGUSR2 cgm
