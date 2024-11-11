@@ -89,6 +89,7 @@ void read_cycle(bringup_state *s)
 {
     char pipe_write_buffer[4096];
     int r_length, w_length;
+    
     signal(SIGPIPE, SIG_IGN);
     while((r_length = read(s->file_in_fd, pipe_write_buffer, 4096)) > 0 || errno == EINTR) {
         if((w_length = write(s->pipe_out_fd, pipe_write_buffer, r_length)) < r_length || w_length < 0) {
@@ -163,6 +164,8 @@ void bringdown_read(bringup_state *s)
 {
     if (s == NULL) { return; }
 
+    signal(SIGPIPE, SIG_DFL);
+    
     if(s->file_in_fd != -1) {
         if(close(s->file_in_fd) < 0) {
             ERR("Failed to close input file descriptor! %s");
