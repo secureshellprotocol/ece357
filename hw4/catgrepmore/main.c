@@ -32,6 +32,7 @@ int establish_signal_overrides(int signo, void (*handler)(int))
 {
     struct sigaction sa;
     sa.sa_handler = handler;
+    sa.sa_flags=0;
     sigemptyset(&(sa.sa_mask));
     sigaddset(&(sa.sa_mask), signo);
     if(sigaction(signo, &sa, NULL) == -1) {
@@ -54,10 +55,9 @@ int main(int argc, char *argv[])
             ERR("%s: pipeline initialization failed!", argv[0]);
             goto error;
         }
-
+        
         int grep_pid = s->grep_pid;
         int more_pid = s->more_pid;
-        
         
         if(establish_signal_overrides(SIGUSR1, report_stats_handler) < 0) {
             goto error;
@@ -71,29 +71,21 @@ int main(int argc, char *argv[])
         // start busyloop
         switch(setjmp(readloop_jmp_buf)) {
             case 0:
-                if(read_cycle(s) == EXIT_FAIL) {
-                    ERR("%s: read cycle failure!");
-                    goto error;
-                }
+                read_cycle(s);
                 break;
             default:
                 ERR("\n\n*** SIGUSR2 received! Moving on to file #%d\n", files_read);
-                // our state was invalidated. due to stack rewind, we need to
-                // enforce null s.
-                //s = NULL;
-
-//                if(kill(more_pid, SIGINT) < 0) {
-//                    ERR("Failed to kill more! %s");
-//                }
-
+                // forcibly stop pipeline, inducing a broken pipe
+                kill(grep_pid, SIGINT);
+                kill(more_pid, SIGINT);
                 goto file_skip;
         }
         
         total_reported_bytes += s->bytes_read;
         
-file_skip: 
-        bringdown_pipes(s);
-        
+file_skip:
+
+        bringdown_read(s);
         unsigned int grep_wstatus, more_wstatus;
         while(waitpid(more_pid, &more_wstatus, 0) > 0 || (errno == EINTR));
         while(waitpid(grep_pid, &grep_wstatus, 0) > 0 || (errno == EINTR));
