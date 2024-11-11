@@ -28,6 +28,6 @@ void bringdown_state(bringup_state *s);
 int grep_bringup(bringup_state *s);
 int more_bringup(bringup_state *s);
 
-void read_cycle(bringup_state *s);
+void read_cycle(bringup_state *s, volatile unsigned int *total_bytes);
 
 #endif

@@ -11,12 +11,14 @@
 #include "pipeline.h"
 
 
-/*  ---------               ---------               ---------
- *  |       |               |       |               |       |
- *  |  cgm  | --<pipe 1>--> | grep  | --<pipe 2>--> | more  |
- *  |       |               |       |               |       |
- *  |       |               |       |               |       |
- *  ---------               ---------               ---------
+/*        
+         basic idea:
+            ---------               ---------               ---------
+            |       |               |       |               |       |
+ infile --> |  cgm  | --<pipe 1>--> | grep  | --<pipe 2>--> | more  | --> me :D
+            |       |               |       |               |       |
+            |       |               |       |               |       |
+            ---------               ---------               ---------
  */
 
 
@@ -45,7 +47,8 @@ bringup_state *pipeline_bringup(char *filename, char *pattern)
     }
     
     int pipe_sz; 
-    pipe_sz = fcntl(pipeline_fds[1], F_SETPIPE_SZ, 4096);
+    pipe_sz = fcntl(pipeline_fds[1], F_SETPIPE_SZ, 4096); // set pipes to be
+                                                          // 4096k in size
     s->pipe_out_fd = pipeline_fds[1];
     s->grep_in_fd = pipeline_fds[0];
 
@@ -85,23 +88,26 @@ error:
     return NULL;
 }
 
-void read_cycle(bringup_state *s) 
+void read_cycle(bringup_state *s, volatile unsigned int *total_bytes) 
 {
     char pipe_write_buffer[4096];
     int r_length, w_length;
     
     signal(SIGPIPE, SIG_IGN);
-    while((r_length = read(s->file_in_fd, pipe_write_buffer, 4096)) > 0 || errno == EINTR) {
+    while((r_length = read(s->file_in_fd, pipe_write_buffer, 4096)) > 0 || (errno == EINTR)) {
         if((w_length = write(s->pipe_out_fd, pipe_write_buffer, r_length)) < r_length || w_length < 0) {
             switch(errno) {
-                case EPIPE: // dont care
-                    break;
+                case EPIPE: // its joever (our pipeline is down!)
+                    return;
+                case EINTR: // small interrupt, get back to work
+                    continue;
                 default:    // report it and move on
                     ERR("write: %s");
-                    break;
+                    continue;
             }
         }
-        s->bytes_read += r_length;
+        s->bytes_read += w_length;
+        if(total_bytes != NULL) { *total_bytes += w_length; }
     }
     return;
 }

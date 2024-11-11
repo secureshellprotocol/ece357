@@ -56,9 +56,6 @@ int main(int argc, char *argv[])
             goto error;
         }
         
-        int grep_pid = s->grep_pid;
-        int more_pid = s->more_pid;
-        
         if(establish_signal_overrides(SIGUSR1, report_stats_handler) < 0) {
             goto error;
         }
@@ -71,25 +68,22 @@ int main(int argc, char *argv[])
         // start busyloop
         switch(setjmp(readloop_jmp_buf)) {
             case 0:
-                read_cycle(s);
+                read_cycle(s, &total_reported_bytes);
                 break;
             default:
-                ERR("\n\n*** SIGUSR2 received! Moving on to file #%d\n", files_read);
+                ERR("\n\n*** SIGUSR2 received! Moving on to file #%d\n", files_read + 1);
                 // forcibly stop pipeline, inducing a broken pipe
-                kill(grep_pid, SIGINT);
-                kill(more_pid, SIGINT);
-                goto file_skip;
+                if(kill(s->more_pid, SIGINT) < 0) {
+                    ERR("kill: %s");
+                }
+            break;
         }
         
-        total_reported_bytes += s->bytes_read;
-        
-file_skip:
-
+        // clean up
         bringdown_read(s);
         unsigned int grep_wstatus, more_wstatus;
-        while(waitpid(more_pid, &more_wstatus, 0) > 0 || (errno == EINTR));
-        while(waitpid(grep_pid, &grep_wstatus, 0) > 0 || (errno == EINTR));
-        // clean up
+        while(waitpid(s->more_pid, &more_wstatus, 0) > 0 || (errno == EINTR));
+        while(waitpid(s->grep_pid, &grep_wstatus, 0) > 0 || (errno == EINTR));
         bringdown_state(s);
 
         files_read++;
