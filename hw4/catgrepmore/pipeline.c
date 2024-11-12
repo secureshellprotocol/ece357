@@ -36,20 +36,20 @@ bringup_state *pipeline_bringup(char *filename, char *pattern)
 
     if((s->file_in_fd = open(filename, O_RDONLY)) < 0) {
         ERR("pipeline_bringup: Couldn't open %s for reading: %s", filename);
-        goto error; // this should skip to next file
+        goto error;
     }
-
+	// TODO RETAB THIS FILE
     // establish plumbing
+    int pipe_sz; 
     int pipeline_fds[2];
     if(pipe(pipeline_fds) < 0) {
         ERR("pipeline_bringup: Failed to establish pipes! %s");
         goto error;
     }
-    
-    int pipe_sz; 
-    pipe_sz = fcntl(pipeline_fds[1], F_SETPIPE_SZ, 4096); // set pipes to be
+	pipe_sz = fcntl(pipeline_fds[1], F_SETPIPE_SZ, 4096); // set pipes to be
                                                           // 4096k in size
-    s->pipe_out_fd = pipeline_fds[1];
+     
+	s->pipe_out_fd = pipeline_fds[1];
     s->grep_in_fd = pipeline_fds[0];
 
     if(pipe(pipeline_fds) < 0) {
@@ -57,7 +57,7 @@ bringup_state *pipeline_bringup(char *filename, char *pattern)
         goto error;
     }
     pipe_sz = fcntl(pipeline_fds[1], F_SETPIPE_SZ, 4096);
-    s->grep_out_fd = pipeline_fds[1];
+	s->grep_out_fd = pipeline_fds[1];
     s->more_in_fd = pipeline_fds[0];
 
     // attempt to launch grep
@@ -72,16 +72,16 @@ bringup_state *pipeline_bringup(char *filename, char *pattern)
         goto error;
     }
     
-    // close redundant file descriptors
+    // close grep readside, we dont need it
     if(s->grep_in_fd != -1) {
         if(close(s->grep_in_fd) < 0) {
             ERR("Failed to close grep read pipe descriptor! %s");
         } else s->grep_in_fd = -1;
     }
+	// close pipe 2, we don't touch it anymore
+	bringdown_pipe_2(s);
 
-    // ready to read
-
-    return s;
+    return s;	// ready for read_cycle()
 
 error: 
     bringdown_state(s);
@@ -97,13 +97,13 @@ void read_cycle(bringup_state *s, volatile unsigned int *total_bytes)
     while((r_length = read(s->file_in_fd, pipe_write_buffer, 4096)) > 0 || (errno == EINTR)) {
         if((w_length = write(s->pipe_out_fd, pipe_write_buffer, r_length)) < r_length || w_length < 0) {
             switch(errno) {
-                case EPIPE: // its joever (our pipeline is down!)
+                case EPIPE: // its joever - our pipeline is down!
                     return;
                 case EINTR: // small interrupt, get back to work
                     continue;
                 default:    // report it and move on
                     ERR("write: %s");
-                    continue;
+                    return;
             }
         }
         s->bytes_read += w_length;
@@ -234,7 +234,7 @@ int more_bringup(bringup_state *s)
         case 0:
             dup2(s->more_in_fd, STDIN_FILENO);
             bringdown_state(s);
-            execlp("more", "more", NULL);
+            execlp("more", "more", "-e", NULL);
             ERR("more_bringup: exec failed! %s");
             goto error;
         default:

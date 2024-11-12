@@ -13,11 +13,11 @@
 unsigned int volatile files_read = 1;
 unsigned int volatile total_reported_bytes = 0;
 
-jmp_buf readloop_jmp_buf;
+sigjmp_buf readloop_jmp_buf;
 
 void skip_handler(int s)
 {
-    longjmp(readloop_jmp_buf, 1);
+    siglongjmp(readloop_jmp_buf, 1);
 }
 
 void report_stats_handler(int s)
@@ -66,17 +66,19 @@ int main(int argc, char *argv[])
         ERR("\n\n>>>\t>>>\t>>>\t>>>Read file %d\n\n", files_read);
         
         // start busyloop
-        switch(setjmp(readloop_jmp_buf)) {
+        switch(sigsetjmp(readloop_jmp_buf, 1)) {
             case 0:
                 read_cycle(s, &total_reported_bytes);
                 break;
             default:
-                ERR("\n\n*** SIGUSR2 received! Moving on to file #%d\n", files_read + 1);
                 // forcibly stop pipeline, inducing a broken pipe
-                if(kill(s->more_pid, SIGINT) < 0) {
+				// we need to wake the process if it's asleep	
+				if(kill(s->more_pid, SIGINT) < 0) {
                     ERR("kill: %s");
                 }
-            break;
+				// TODO: check if we are on last file goes here
+                ERR("\n\n*** SIGUSR2 received! Moving on to file #%d\n", files_read + 1);
+            	break;
         }
         
         // clean up
