@@ -15,11 +15,14 @@ unsigned int volatile total_reported_bytes = 0;
 
 sigjmp_buf readloop_jmp_buf;
 
+// SIGUSR2 handler -- breaks from read_cycle to enter bringdown and prompt our
+// next file
 void skip_handler(int s)
 {
     siglongjmp(readloop_jmp_buf, 1);
 }
 
+// SIGUSR1 handler -- reports the global stats from our state cycles
 void report_stats_handler(int s)
 {
     ERR("\n\n----------Begin Status Report----------\n");
@@ -28,6 +31,7 @@ void report_stats_handler(int s)
     ERR("\n-----------End Status Report-----------\n\n");
 }
 
+// Signal handler override establisher -- maps `signo` to run `handler`
 int establish_signal_overrides(int signo, void (*handler)(int))
 {
     struct sigaction sa;
@@ -48,6 +52,15 @@ int main(int argc, char *argv[])
 
     bringup_state *s = NULL;
     
+    // map SIGUSR1 to report global stats
+    if(establish_signal_overrides(SIGUSR1, report_stats_handler) < 0) {
+        goto error;
+    }
+    // map SIGUSR2 to skip current file
+    if(establish_signal_overrides(SIGUSR2, skip_handler) < 0) {
+        goto error;
+    }
+   
     for(int i = 2; i < argc; i++) {
         
         // bring up pipeline
@@ -56,13 +69,6 @@ int main(int argc, char *argv[])
             goto error;
         }
         
-        if(establish_signal_overrides(SIGUSR1, report_stats_handler) < 0) {
-            goto error;
-        }
-        if(establish_signal_overrides(SIGUSR2, skip_handler) < 0) {
-            goto error;
-        }
-
         ERR("\n\n>>>\t>>>\t>>>\t>>>Read file %d\n\n", files_read);
         
         // start busyloop
@@ -70,29 +76,38 @@ int main(int argc, char *argv[])
             case 0:
                 read_cycle(s, &total_reported_bytes);
                 break;
-            default:
-                // forcibly stop pipeline, inducing a broken pipe
-				// we need to wake the process if it's asleep	
-				if(kill(s->more_pid, SIGINT) < 0) {
+            default: // user sent SIGUSR2 -- quit early! jumped here.
+                // forcibly stop pipeline -- induce broken pipe by gracefully
+                
+                // killing `more` and causing a broken pipe
+			    // we kill grep first to avoid an annoying broken pipe error
+                if(kill(s->grep_pid, SIGINT) < 0) {
                     ERR("kill: %s");
                 }
-				// TODO: check if we are on last file goes here
-                ERR("\n\n*** SIGUSR2 received! Moving on to file #%d\n", files_read + 1);
+                if(kill(s->more_pid, SIGINT) < 0) {
+                    ERR("kill: %s");
+                }
+                if(files_read + 1 == argc - 1) {
+                    ERR("\n\n*** SIGUSR2 received! Quitting");
+                } else {
+                    ERR("\n\n*** SIGUSR2 received! Moving on to file #%d\n", files_read + 1);
+                }
             	break;
         }
         
-        // clean up
+        // clean up state -- close all lingering fds, and then wait for children
         bringdown_read(s);
         unsigned int grep_wstatus, more_wstatus;
-        while(waitpid(s->more_pid, &more_wstatus, 0) > 0 || (errno == EINTR));
         while(waitpid(s->grep_pid, &grep_wstatus, 0) > 0 || (errno == EINTR));
+        while(waitpid(s->more_pid, &more_wstatus, 0) > 0 || (errno == EINTR));
+        
         bringdown_state(s);
 
         files_read++;
     }
     return EXIT_OK;
 
-error:
+error: // something unexpected happened in our pipeline
     bringdown_state(s);
     return EXIT_FAIL;
 }
