@@ -9,7 +9,7 @@ touch $2
 minimumsize=65536
 until [ $(wc -c < $2) -ge $minimumsize ];
 do
-    fortune >> $2
+    fortune computers science sports startrek >> $2
 done
 echo $2 is $(wc -c < $2) bytes
 
