@@ -4,7 +4,14 @@ gcc ./test3.c -o ./test3.out
 gcc ./test4.c -o ./test4.out
 
 ./test1.out
-echo "Test #1 (0 -> Pass, 255 -> Fail, 254 -> Error, Otherwise Signal Number):" $?
+result=$?
+case $result in 
+    1) echo "Test #1 (0 -> Pass, 255 -> Fail, 254 -> Error, Otherwise Signal):" $result;;
+    254) echo "Test #1 (0 -> Pass, 255 -> Fail, 254 -> Error, Otherwise Signal):" $result;;
+    255) echo "Test #1 (0 -> Pass, 255 -> Fail, 254 -> Error, Otherwise Signal):" $result;;
+    *) signame=$(kill -l $result)
+    echo "Test #1 (0 -> Pass, 255 -> Fail, 254 -> Error, Otherwise Signal):" $result = SIG$signame;;
+esac
 
 ./test2.out
 echo "Test #2 (0 -> Pass, 1 -> Fail, 255 -> Error):" $?
