@@ -11,31 +11,29 @@
 #include <ctype.h>
 #include <string.h>
 
-int test4();
-
 int main(int argc, char *argv[]) {
 
-    int FILE_SIZE = 2;
+    int FILE_SIZE = 4100;
 
     int fd = open(".", O_RDWR | __O_TMPFILE);
     if (fd == -1) {
         fprintf(stderr, "Error encountered while creating the test file\n");
         perror(strerror(errno));
         close(fd);
-        return 1;
+        return 255;
     }
     if (write(fd, "A", FILE_SIZE) == -1) {
         fprintf(stderr, "Error encountered while writing to the test file\n");
         perror(strerror(errno));
         close(fd);
-        return 1;
+        return 255;
     }
 
     char *addr = mmap(NULL, 2*_SC_PAGE_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     if (addr == MAP_FAILED) {
         fprintf(stderr, "Error encountered while creating mmap\n");
         perror(strerror(errno));
-        return 1;
+        return 255;
     }
 
     addr[FILE_SIZE] = 'X';
@@ -44,13 +42,13 @@ int main(int argc, char *argv[]) {
         perror("Error encountered while extending file");
         perror(strerror(errno));
         close(fd);
-        return 1;
+        return 255;
     }
     if (write(fd, "\0", 1) == -1) {
         perror("Error encountered while finalizing file extension");
         perror(strerror(errno));
         close(fd);
-        return 1;
+        return 255;
     }
 
     char buffer[FILE_SIZE+2];
@@ -59,7 +57,7 @@ int main(int argc, char *argv[]) {
         perror("Failed to read file");
         perror(strerror(errno));
         close(fd);
-        return 1;
+        return 255;
     }
 
     if (buffer[FILE_SIZE] == 'X') {

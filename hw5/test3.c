@@ -16,24 +16,24 @@ int main(int argc, char *argv[]) {
     int fd = open(".", O_RDWR | __O_TMPFILE);
     if (fd == -1) {
         fprintf(stderr, "Error encountered while creating the test file\n");
-        return 1;
+        return 255;
     }
     if (write(fd, "A", 1) == -1) {
         fprintf(stderr, "Error encountered while writing to the test file\n");
         close(fd);
-        return 1;
+        return 255;
     }
     if (ftruncate(fd, _SC_PAGE_SIZE) == -1) {
         fprintf(stderr, "Error encountered while setting the test file size\n");
         close(fd);
-        return 1;
+        return 255;
     }
 
     char *addr = mmap(NULL, _SC_PAGE_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
     if (addr == MAP_FAILED) {
         fprintf(stderr, "Error encountered while creating mmap\n");
         perror(strerror(errno));
-        return 1;
+        return 255;
     }
     addr[0] = 'B';
 
@@ -46,7 +46,7 @@ int main(int argc, char *argv[]) {
             perror(strerror(errno));
         }
         close(fd);
-        return 1;
+        return 255;
     }
 
     if (buf[0] == 'B') {
@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
     } else {
         fprintf(stderr, "Unknown error occured");
         close(fd);
-        return 1;
+        return 255;
     }
 
 }
