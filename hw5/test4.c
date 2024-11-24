@@ -13,9 +13,12 @@
 
 int main(int argc, char *argv[]) {
 
-    int FILE_SIZE = 4100;
+    int FILE_SIZE = 1; // >= 1
 
-    int fd = open(".", O_RDWR | __O_TMPFILE);
+    // temp file contents:
+    // "A" + '\0' * FILE_SIZE-1 + 'X' + '\0'
+
+    int fd = open(".", O_RDWR | __O_TMPFILE, 0666);
     if (fd == -1) {
         fprintf(stderr, "Error encountered while creating the test file\n");
         perror(strerror(errno));
@@ -29,7 +32,7 @@ int main(int argc, char *argv[]) {
         return 255;
     }
 
-    char *addr = mmap(NULL, 2*_SC_PAGE_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    char *addr = mmap(NULL, ((FILE_SIZE/4096)+1)*4096, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     if (addr == MAP_FAILED) {
         fprintf(stderr, "Error encountered while creating mmap\n");
         perror(strerror(errno));
@@ -38,7 +41,7 @@ int main(int argc, char *argv[]) {
 
     addr[FILE_SIZE] = 'X';
 
-    if (lseek(fd, FILE_SIZE+1, SEEK_SET) == -1) {
+    if (lseek(fd, FILE_SIZE+2, SEEK_SET) == -1) {
         perror("Error encountered while extending file");
         perror(strerror(errno));
         close(fd);

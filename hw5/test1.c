@@ -24,7 +24,7 @@ int main(int argc, char *argv[]) {
         sigaction(i, &sa, NULL);
     }
 
-    char *addr = mmap(NULL, _SC_PAGE_SIZE, PROT_READ, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    char *addr = mmap(NULL, 4096, PROT_READ, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     if (addr == MAP_FAILED) {
         return 254;
     }

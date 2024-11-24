@@ -23,13 +23,13 @@ int main(int argc, char *argv[]) {
         close(fd);
         return 255;
     }
-    if (ftruncate(fd, _SC_PAGE_SIZE) == -1) {
+    if (ftruncate(fd, 4096) == -1) {
         fprintf(stderr, "Error encountered while setting the test file size\n");
         close(fd);
         return 255;
     }
 
-    char *addr = mmap(NULL, _SC_PAGE_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
+    char *addr = mmap(NULL, 4096, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
     if (addr == MAP_FAILED) {
         fprintf(stderr, "Error encountered while creating mmap\n");
         perror(strerror(errno));
