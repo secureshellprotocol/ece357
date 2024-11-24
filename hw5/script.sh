@@ -1,3 +1,4 @@
+#!/bin/bash
 gcc ./test1.c -o ./test1.out
 gcc ./test2.c -o ./test2.out
 gcc ./test3.c -o ./test3.out
@@ -5,7 +6,7 @@ gcc ./test4.c -o ./test4.out
 
 ./test1.out
 result=$?
-case $result in 
+case $result in
     1) echo "Test #1 (0 -> Pass, 255 -> Fail, 254 -> Error, Otherwise Signal):" $result;;
     254) echo "Test #1 (0 -> Pass, 255 -> Fail, 254 -> Error, Otherwise Signal):" $result;;
     255) echo "Test #1 (0 -> Pass, 255 -> Fail, 254 -> Error, Otherwise Signal):" $result;;

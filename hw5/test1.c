@@ -26,6 +26,8 @@ int main(int argc, char *argv[]) {
 
     char *addr = mmap(NULL, 4096, PROT_READ, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     if (addr == MAP_FAILED) {
+        fprintf(stderr, "Error encountered during mmap!\n");
+        perror(strerror(errno));
         return 254;
     }
 
