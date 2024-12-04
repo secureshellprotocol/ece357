@@ -102,6 +102,7 @@ void init_player(struct sem *from, struct sem *dest, int iterations)
     
     ERR("Child %d (pid %d) done, signal handler was invoked %d times\n",
         my_procnum, pid, sigusr1_invocation_count);
+    
     exit(EXIT_SUCCESS);
 }
 

@@ -6,6 +6,7 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
+#include "macros.h"
 #include "sem.h"
 #include "spinlock.h"
 
@@ -29,7 +30,11 @@ void sem_init(struct sem *s, int count)
 //  1 otherwise.
 int sem_try(struct sem *s)
 { 
-    spin_lock(&(s->count_lock));
+    if(spin_lock(&(s->count_lock)) == EXIT_FAIL) 
+    {
+        ERR_EXT("sem_try: failed to yield! %s");
+        return 1;
+    }
     if(s->count > 0)
     {
         s->count = s->count - 1;
@@ -60,15 +65,30 @@ void sem_wait(struct sem *s, int vpid)
         
         // Could not decrement! We enter a wait queue, blocking until we receive 
         // SIGUSR1. We'll try again once we get that signal.
-        sigprocmask(SIG_BLOCK, &set, &oldmask); // SIGUSR1 masked
-        spin_lock(&(s->wait_queue_lock));
+        if(sigprocmask(SIG_BLOCK, &set, &oldmask) < 0)
+        {
+            ERR_EXT("sem_wait: sigprocmask: failed to block SIGUSR1: %s");
+            continue;
+        }
+        if(spin_lock(&(s->wait_queue_lock)) == EXIT_FAIL)
+        {
+            ERR_EXT("sem_wait: failed to yield for wait queue lock! %s\n");
+            if(sigprocmask(SIG_UNBLOCK, &set, NULL) < 0)
+            {
+                ERR_EXT("sem_wait: sigprocmask: failed to unblock SIGUSR1: %s");
+            }
+            continue;
+        }
         
         s->wait_queue[vpid] = pid;
         (s->sleep_count[vpid])++;
         
         spin_unlock(&(s->wait_queue_lock));
-        sigsuspend(&oldmask); // SIGUSR1 unmasked
-        sigprocmask(SIG_UNBLOCK, &set, NULL);
+        sigsuspend(&oldmask);
+        if(sigprocmask(SIG_UNBLOCK, &set, NULL) < 0)
+        {
+            ERR_EXT("sem_wait: sigprocmask: failed to unblock SIGUSR1: %s");
+        }
     }
 }
 
@@ -76,12 +96,20 @@ void sem_wait(struct sem *s, int vpid)
 // them up.
 void sem_inc(struct sem *s)
 {
-    spin_lock(&(s->count_lock));
+    if(spin_lock(&(s->count_lock)) == EXIT_FAIL)
+    {
+        ERR_EXT("sem_inc: failed to acquire lock for count! %s\n");
+        return;
+    }
     s->count = s->count + 1;
     
     if(s->count > 0)
     {
-        spin_lock(&(s->wait_queue_lock));
+        if(spin_lock(&(s->wait_queue_lock)) == EXIT_FAIL)
+        {
+            ERR_EXT("sem_inc: failed to acquire lock for wait queue! %s\n");
+            return;
+        }
         for(int vpid = 0; vpid < N_PROC; vpid++)
         {
 
@@ -91,7 +119,6 @@ void sem_inc(struct sem *s)
                         s->wait_queue[vpid], strerror(errno));
             }
             s->wait_queue[vpid] = 0;
-
         }
         spin_unlock(&(s->wait_queue_lock));
     }
