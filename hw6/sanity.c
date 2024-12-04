@@ -9,18 +9,21 @@
 
 #include "spinlock.h"
 
+#define TEN 4000000
+
 volatile char *lock;
+int my_procnum;
 
 void count_to_ten(long long *shared_number)
 {
-    for(int i = 0; i < 100000; i++) {
+    for(int i = 0; i < TEN; i++) {
         (*shared_number)++;
     }
 }
 
 void locking_count_to_ten(long long *shared_number)
 {
-    for(int i = 0; i < 100000; i++) {
+    for(int i = 0; i < TEN; i++) {
         spin_lock(lock);
         (*shared_number)++;
         spin_unlock(lock);
@@ -38,15 +41,14 @@ int main(int argc, char *argv[])
     *shared_number = 0;
 
     pid_t pid;
-    int procnum;
     // My iMac15,1 has an Intel i5-4590, with 4 cores. 
-    for(procnum = 0; procnum < 4; procnum++)
+    for(my_procnum = 0; my_procnum < 4; my_procnum++)
     {
         pid = fork();
         if(pid == 0) 
         {
             fprintf(stderr, "\"I expected this reception,\" said daemon %d\n", 
-                    procnum);
+                    my_procnum);
             break;
         }
     }
@@ -70,13 +72,13 @@ int main(int argc, char *argv[])
     // lock them in the cellar
     *shared_number = 0;
 
-    for(procnum = 0; procnum < 4; procnum++)
+    for(my_procnum = 0; my_procnum < 4; my_procnum++)
     {
         pid = fork();
         if(pid == 0) 
         {
             fprintf(stderr, "\"I expected this reception,\" said daemon %d\n", 
-                    procnum);
+                    my_procnum);
             break;
         }
     }

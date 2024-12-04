@@ -1,34 +1,22 @@
-#ifndef ERJR_SEM_H
-#define ERJR_SEM_H
 #define _GNU_SOURCE
+#include <errno.h>
 #include <signal.h>
+#include <stdio.h>
+#include <string.h>
 #include <sys/mman.h>
 #include <unistd.h>
 
+#include "sem.h"
 #include "spinlock.h"
 
 // max number of processes we can support.
 #define N_PROC 64
-
-struct sem {
-    volatile char *count_lock;
-    int count;
-
-    volatile char *wait_queue_lock;
-    pid_t wait_queue[N_PROC];
-};
-
+struct sem;
 
 // Initializes an already allocated 'struct sem *s' with some count 'count'.
 // Must only be called once per semaphore.
 void sem_init(struct sem *s, int count)
 {
-    // generate lock for count and queue
-    s->count_lock = (char *) mmap(NULL, sizeof(char), PROT_READ | PROT_WRITE, 
-                                  MAP_SHARED | MAP_ANONYMOUS, 0, 0);
-    s->wait_queue_lock = (char *) mmap(NULL, sizeof(char), PROT_READ | PROT_WRITE, 
-                                       MAP_SHARED | MAP_ANONYMOUS, 0, 0);
-
     // set count
     s->count = count;
 
@@ -40,20 +28,16 @@ void sem_init(struct sem *s, int count)
 //  0 if we would have to block (our semaphore count is not positive)
 //  1 otherwise.
 int sem_try(struct sem *s)
-{
+{ 
+    spin_lock(&(s->count_lock));
     if(s->count > 0)
     {
-        spin_lock(s->count_lock);
-        if(s->count > 0)
-        {
-            s->count = s->count - 1;
-            spin_unlock(s->count_lock);
-            
-            return 1;
-        }
-        spin_unlock(s->count_lock);
+        s->count = s->count - 1;
+        spin_unlock(&(s->count_lock));
+        return 1;
     }
 
+    spin_unlock(&(s->count_lock));
     return 0;
 }
 
@@ -64,42 +48,53 @@ int sem_try(struct sem *s)
 //  between 0 and N_PROC-1
 void sem_wait(struct sem *s, int vpid)
 {
-    sigset_t block_sigusr1, oldmask;
-    sigemptyset(&block_sigusr1);
-    sigaddset(&block_sigusr1, SIGUSR1);
+    sigset_t set, oldmask;
+    sigemptyset(&set);
+    sigaddset(&set, SIGUSR1);
     
     pid_t pid = getpid();
 
     while(1)
     {
-        if(sem_try(s) == 1) { break; }
+        if(sem_try(s) == 1) { return; }
+        
         // Could not decrement! We enter a wait queue, blocking until we receive 
         // SIGUSR1. We'll try again once we get that signal.
-        // add ourselves to wait queue
-        spin_lock(s->wait_queue_lock);
-        sigprocmask(SIG_BLOCK, &block_sigusr1, &oldmask);
+        sigprocmask(SIG_BLOCK, &set, &oldmask); // SIGUSR1 masked
+        spin_lock(&(s->wait_queue_lock));
         
-        s->wait_queue[vpid] = pid;        
-
-        spin_unlock(s->wait_queue_lock);
-        sigsuspend(&oldmask);
-        sigprocmask(SIG_UNBLOCK, &block_sigusr1, NULL);
+        s->wait_queue[vpid] = pid;
+        (s->sleep_count[vpid])++;
+        
+        spin_unlock(&(s->wait_queue_lock));
+        sigsuspend(&oldmask); // SIGUSR1 unmasked
+        sigprocmask(SIG_UNBLOCK, &set, NULL);
     }
-    return;
 }
 
 // Increment our semaphore by 1. Sends SIGUSR1 to all blocked processes to wake
 // them up.
 void sem_inc(struct sem *s)
 {
-    spin_lock(s->count_lock);
+    spin_lock(&(s->count_lock));
     s->count = s->count + 1;
-    spin_unlock(s->count_lock);
     
     if(s->count > 0)
     {
+        spin_lock(&(s->wait_queue_lock));
+        for(int vpid = 0; vpid < N_PROC; vpid++)
+        {
 
+            if(s->wait_queue[vpid] != 0 && kill(s->wait_queue[vpid], SIGUSR1)<0) 
+            {
+                fprintf(stderr, "sem_inc: failed to send SIGUSR1 to pid %d: %s",
+                        s->wait_queue[vpid], strerror(errno));
+            }
+            s->wait_queue[vpid] = 0;
+
+        }
+        spin_unlock(&(s->wait_queue_lock));
     }
-}
 
-#endif
+    spin_unlock(&(s->count_lock));
+}
