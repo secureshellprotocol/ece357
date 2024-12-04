@@ -105,6 +105,20 @@ void init_player(struct sem *from, struct sem *dest, int iterations)
     exit(EXIT_SUCCESS);
 }
 
+void report_shell_stats(struct sem *shells)
+{
+    printf("Sem#\tval\tSleeps\tWakes\n");
+    for(int shell = 0; shell < 3; shell++)
+    {
+        printf("%d\t%d\n", shell, shells[shell].count);
+        for(int vcpu = 0; vcpu < 6; vcpu++){
+            printf(" VCPU%d\t\t%d\t%d\n", vcpu, 
+                    shells[shell].sleep_count[vcpu],
+                    shells[shell].wakeup_count[vcpu]);
+        }
+    }
+}
+
 int start_shellgame(int count, int iterations)
 {
     struct sem *from, *destination;
@@ -147,7 +161,7 @@ int start_shellgame(int count, int iterations)
     }
 
     ERR("All children done!\n");
-//    report_shell_stats(shells);
+    report_shell_stats(shells);
 
     return EXIT_SUCCESS;
 }
