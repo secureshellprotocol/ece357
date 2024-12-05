@@ -59,11 +59,16 @@ void sem_wait(struct sem *s, int vpid)
    
     pid_t pid = getpid();
 
-    while(sem_try(s) != 1)
+    spin_lock(&(s->lock));
+    while(1)
     {
-        // Could not decrement! We enter a wait queue, blocking until we receive 
+        if(s->count > 0) {
+			s->count = s->count - 1;
+			goto unlock;
+		}
+		// Could not decrement! We enter a wait queue, blocking until we receive 
         // SIGUSR1. We'll try again once we get that signal.
-        spin_lock(&(s->lock));
+
         if(sigprocmask(SIG_BLOCK, &set, &oldset) < 0)
         {
             ERR_EXT("sem_wait: sigprocmask: failed to block SIGUSR1: %s\n");
@@ -78,13 +83,15 @@ void sem_wait(struct sem *s, int vpid)
         
         spin_lock(&(s->lock));
         s->wait_queue[vpid] = 0;
-        spin_unlock(&(s->lock));
         
         if(sigprocmask(SIG_UNBLOCK, &set, NULL) < 0)
         {
             ERR_EXT("sem_wait: sigprocmask: failed to unblock SIGUSR1: %s\n");
         }
     }
+
+unlock:
+	spin_unlock(&(s->lock));
     return;
 }
 
