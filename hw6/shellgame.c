@@ -20,6 +20,44 @@ void sigusr1_handler(int s)
     sigusr1_invocation_count++;
 }
 
+int getfrom(int vpid)
+{
+    switch(vpid)
+    {
+        case 0:
+            return 0;
+        case 1:
+            return 1;
+        case 2:
+            return 0;
+        case 3:
+            return 2;
+        case 4:
+            return 1;
+        case 5:
+            return 2;
+    }
+}
+
+int getto(int vpid)
+{
+    switch(vpid)
+    {
+        case 0:
+            return 1;
+        case 1:
+            return 0;
+        case 2:
+            return 2;
+        case 3:
+            return 0;
+        case 4:
+            return 2;
+        case 5:
+            return 1;
+    }
+}
+
 // Converts strings to integers using strtol. Conversions to negative integers
 // are thrown out and we return EXIT_FAIL
 int arg_convert(char *arg)
@@ -99,7 +137,7 @@ void init_player(struct sem *from, struct sem *dest, int iterations)
         sem_wait(from, my_procnum);
         sem_inc(dest);
     }
-    
+
     ERR("Child %d (pid %d) done, signal handler was invoked %d times\n",
         my_procnum, pid, sigusr1_invocation_count);
     
@@ -137,8 +175,8 @@ int start_shellgame(int count, int iterations)
     pid_t fork_pid;
     for(my_procnum = 0; my_procnum < 6; my_procnum++)
     {
-        from = &(shells[(3 * my_procnum)/6]);
-        destination = &(shells[(2 - (my_procnum % 3))]);
+        from = &(shells[getfrom(my_procnum)]);
+        destination = &(shells[getto(my_procnum)]);
 
         switch(fork_pid = fork())
         {
@@ -175,13 +213,13 @@ int main(int argc, char *argv[])
     count = arg_convert(argv[1]);
     if(count == EXIT_FAIL)
     {
-        ERR("%s: Invalid initial count provided!", argv[0]);
+        ERR("%s: Invalid initial count provided!\n", argv[0]);
         return EXIT_FAIL;
     }
     iterations = arg_convert(argv[2]);
     if(iterations == EXIT_FAIL)
     {
-        ERR("%s: Invalid iterations provided!", argv[0]);
+        ERR("%s: Invalid iterations provided!\n", argv[0]);
         return EXIT_FAIL;
     }
 

@@ -20,6 +20,7 @@ void sem_init(struct sem *s, int count)
 {
     // set count
     s->count = count;
+
     return;
 }
 
@@ -29,21 +30,21 @@ void sem_init(struct sem *s, int count)
 //  1 otherwise.
 int sem_try(struct sem *s)
 { 
-    if(spin_lock(&(s->lock)) == EXIT_FAIL) 
+    if(spin_lock(&(s->count_lock)) == EXIT_FAIL) 
     {
         ERR_EXT("sem_try: failed to yield for count lock: %s\n");
         return 0;
     }
-    switch(s->count > 0)
+    if(s->count > 0)
     {
-        case 1:
-            s->count = s->count - 1;
-            spin_unlock(&(s->lock));
-            return 1;
-        default:
-            spin_unlock(&(s->lock));
-            return 0;
+        s->count = s->count - 1;
+        spin_unlock(&(s->count_lock));
+        
+        return 1;
     }
+
+    spin_unlock(&(s->count_lock));
+    return 0;
 }
 
 // Block until we can decrement our semaphore by 1.
@@ -63,28 +64,33 @@ void sem_wait(struct sem *s, int vpid)
     {
         // Could not decrement! We enter a wait queue, blocking until we receive 
         // SIGUSR1. We'll try again once we get that signal.
-        spin_lock(&(s->lock));
         if(sigprocmask(SIG_BLOCK, &set, &oldset) < 0)
         {
             ERR_EXT("sem_wait: sigprocmask: failed to block SIGUSR1: %s\n");
             continue;
         }
+        if(spin_lock(&(s->wait_queue_lock)) == EXIT_FAIL)
+        {
+            ERR_EXT("sem_wait: failed to yield for wait queue lock: %s\n");
+            if(sigprocmask(SIG_UNBLOCK, &set, NULL) < 0)
+            {
+                ERR_EXT("sem_wait: sigprocmask: failed to unblock SIGUSR1: %s\n");
+            }
+            continue;
+        }
 
-        (s->sleep_count[vpid])++;
         s->wait_queue[vpid] = pid;
-        spin_unlock(&(s->lock));
+        (s->sleep_count[vpid])++;
         
+        spin_unlock(&(s->wait_queue_lock));
+
         sigsuspend(&oldset);
-        
-        spin_lock(&(s->lock));
-        s->wait_queue[vpid] = 0;
-        spin_unlock(&(s->lock));
-        
         if(sigprocmask(SIG_UNBLOCK, &set, NULL) < 0)
         {
             ERR_EXT("sem_wait: sigprocmask: failed to unblock SIGUSR1: %s\n");
         }
     }
+ 
     return;
 }
 
@@ -94,7 +100,7 @@ void sem_inc(struct sem *s)
 {
     // Spinlock -- wait for our turn to access count, so we can increment and 
     // check if its now a positive value
-    if(spin_lock(&(s->lock)) == EXIT_FAIL)
+    if(spin_lock(&(s->count_lock)) == EXIT_FAIL)
     {
         ERR_EXT("sem_inc: failed to acquire lock for count: %s\n");
         return;
@@ -103,6 +109,12 @@ void sem_inc(struct sem *s)
     
     if(s->count > 0)
     {
+        if(spin_lock(&(s->wait_queue_lock)) == EXIT_FAIL)
+        {
+            ERR_EXT("sem_inc: failed to acquire lock for wait queue: %s\n");
+            return;
+        }
+
         // wake up every waiting process with SIGUSR1
         for(int vpid = 0; vpid < N_PROC; vpid++)
         {
@@ -113,11 +125,15 @@ void sem_inc(struct sem *s)
                     ERR_EXT("sem_inc: failed to send SIGUSR1 to pid %d: %s\n",
                             s->wait_queue[vpid]);
                 }
+                s->wait_queue[vpid] = 0;
                 (s->wakeup_count[vpid])++;
             }
         }
+        
+        spin_unlock(&(s->wait_queue_lock));
     }
     
-    spin_unlock(&(s->lock));
+    spin_unlock(&(s->count_lock));
+
     return;
 }

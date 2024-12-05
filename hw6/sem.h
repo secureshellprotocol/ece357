@@ -8,10 +8,11 @@
 #define N_PROC 64
 
 struct sem {
-    volatile char count_lock;
+    volatile char lock;
+//    volatile char count_lock;
     int count;
 
-    volatile char wait_queue_lock;
+//    volatile char wait_queue_lock;
     pid_t wait_queue[N_PROC];
 
     // Instrumentation Extenstion
