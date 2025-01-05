@@ -1,5 +1,6 @@
 kit - concatenate and copy files
 
+
 USAGE:
 
 kit [-o outfile] infile1 [...infile2....]
